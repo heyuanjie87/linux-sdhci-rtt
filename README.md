@@ -54,16 +54,19 @@ static struct device_node* sd_of(void)
 # 对原版sdhci代码的修改说明
 
 ## 1. sdhci_request_done()
+
+```
+修改点1: 
 在执行`dma_unmap_sg()`前执行了`spin_unlock_irqrestore`然后`*_save()`。
 
-* 原因:
+修改原因: 
 对于存在cache的cpu在进行dma传输前需要更新cache，
 由于上层传下来的数据地址以及数据长度可能是非cacheline对齐的，
 这可能给系统带来致命错误。为了解决这个问题驱动层对非对齐`读`(`写`不需要)
 重新分配了对齐的缓冲区，当传输完成后拷贝数据再释放这段内存。
 所以在`dma_unmap_sg()`中可能释放内存。
 原版代码对整个过程进行`spinlock_irq_save()`这导致内存释放出错。
-
+```
 
 # 已知问题
 
