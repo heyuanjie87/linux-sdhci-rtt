@@ -1,7 +1,7 @@
 #include "osdep/port.h"
 
 #ifndef SDHCI_THREADEDIRQ_STACK_SIZE
-#define SDHCI_THREADEDIRQ_STACK_SIZE 8192
+#define SDHCI_THREADEDIRQ_STACK_SIZE 4096
 #endif
 
 struct irqaction 
@@ -90,15 +90,14 @@ int __sdhci_request_threaded_irq(unsigned int irq, irq_handler_t handler,
     struct irq_desc *desc;
     int ret = 0;
 
+    if (!handler && !thread_fn)
+    {
+        return -EINVAL;
+    }
+
     desc = rt_calloc(1, sizeof(struct irq_desc));
     if (!desc)
         return -ENOMEM;
-
-    if (!handler)
-    {
-        if (!thread_fn)
-            return -EINVAL;
-    }
 
     action = desc->action;
 
@@ -111,10 +110,15 @@ int __sdhci_request_threaded_irq(unsigned int irq, irq_handler_t handler,
     if (ret == 0)
     {
         init_waitqueue_head(&desc->wait_for_threads);
-        desc->rtthd = rt_thread_create("irq", irq_thread, desc, SDHCI_THREADEDIRQ_STACK_SIZE, 0, 20);
+        desc->rtthd = rt_thread_create("irq", irq_thread, desc, SDHCI_THREADEDIRQ_STACK_SIZE, 20, 10);
         if (desc->rtthd)
             rt_thread_startup(desc->rtthd);
+        else
+            ret = -ENOMEM;
     }
+
+    if (ret)
+        rt_free(desc);
 
     return ret;
 }
