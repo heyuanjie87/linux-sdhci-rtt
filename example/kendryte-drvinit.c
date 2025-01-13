@@ -29,7 +29,7 @@ static struct device_node *sd1_of(void)
     struct device_node *dn = &_dn;
     struct property *p = _pp;
 
-    dn_pp_set_and_add_string(dn, p++, "kendryte,k230-dw-mshc");
+    dn_pp_set_and_add_string(dn, p++, "compatible", "kendryte,k230-dw-mshc");
     dn_pp_set_and_add_u32(dn, p++, "bus-width", 4);
     dn_pp_set_and_add_u32(dn, p++, "max-frequency", 50000000);
     dn_pp_set_and_add_bool(dn, p++, "no-1-8-v");
