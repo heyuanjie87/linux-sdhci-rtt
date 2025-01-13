@@ -13,6 +13,10 @@ if GetDepend('SDHCI_PLATFORM_CVITEK'):
     src += Glob('platform/cvitek/*.c')
     if GetDepend('SDHCI_PLATFORM_CVITEK_USING_EXAMPLE'):
         src += Glob('example/cvitek-drvinit.c')
+elif GetDepend('SDHCI_PLATFORM_KENDRYTE'):
+    src += Glob('platform/kendryte/*.c')
+    if GetDepend('SDHCI_PLATFORM_KENDRYTE_USING_EXAMPLE'):
+        src += Glob('example/kendryte-drvinit.c')
 
 group = DefineGroup('Drivers', src, depend = ['PKG_USING_SDHCI'], CPPPATH = CPPPATH)
 
