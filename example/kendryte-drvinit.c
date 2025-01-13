@@ -33,6 +33,7 @@ static struct device_node *sd1_of(void)
     dn_pp_set_and_add_u32(dn, p++, "bus-width", 4);
     dn_pp_set_and_add_u32(dn, p++, "max-frequency", 50000000);
     dn_pp_set_and_add_bool(dn, p++, "no-1-8-v");
+    dn_pp_set_and_add_bool(dn, p ++, "cap-sd-highspeed");
 
     return dn;
 }
@@ -60,5 +61,13 @@ int __sdhci_irq_hw_register(unsigned int irq, irq_handler_t handler, void *id)
 
     return 0;
 }
-
+#if 0
+static int sdhcistart(int argc, char **argv)
+{
+    _sd1_init();
+    return 0;
+}
+MSH_CMD_EXPORT(sdhcistart, sdhci start);
+#else
 INIT_DEVICE_EXPORT(_sd1_init);
+#endif

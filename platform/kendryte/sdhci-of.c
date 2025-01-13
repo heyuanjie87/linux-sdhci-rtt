@@ -293,7 +293,7 @@ int dwcmshc_probe(struct platform_device *pdev)
 	priv = sdhci_pltfm_priv(pltfm_host);
     priv->hs_regs = ioremap(hi_sys_config_addr, 0x400);
 
-    if(memcmp(host->hw_name,"91581000",8) == 0) {
+    if(memcmp(host->hw_name,"sd1", 3) == 0) {
         priv->have_phy = 0;
         data = readl(priv->hs_regs + 8);
         data |= 1<<2 | 1<<0;
