@@ -2,7 +2,7 @@
 #define _SDHCI_MMC_H
 
 #include <drivers/mmcsd_cmd.h>
-#include <drivers/mmcsd_core.h>
+#include <rtdevice.h>
 #include <drivers/mmcsd_host.h>
 
 #include <stdbool.h>

@@ -255,11 +255,16 @@ static void dwcmshc_sdhci_set_uhs_signaling(struct sdhci_host *host, unsigned ti
 	sdhci_writew(host, ctrl_2, SDHCI_HOST_CONTROL2);
 }
 
+static unsigned int dwcmshc_sdhci_get_max_clk(struct sdhci_host *host)
+{
+	return 50000000;
+}
+
 static const struct sdhci_ops sdhci_dwcmshc_kendryte_ops = {
 	.set_clock		= sdhci_set_clock,
 	.set_bus_width		= sdhci_set_bus_width,
 	.set_uhs_signaling	= dwcmshc_sdhci_set_uhs_signaling,
-	.get_max_clock		= sdhci_pltfm_clk_get_max_clock,
+	.get_max_clock		= dwcmshc_sdhci_get_max_clk,
 	.reset			= dwcmshc_sdhci_reset,
 	.adma_write_desc	= dwcmshc_adma_write_desc,
 	.voltage_switch     = dwcmshc_phy_1_8v_init,
@@ -272,5 +277,77 @@ static const struct sdhci_pltfm_data sdhci_dwcmshc_kendryte_pdata = {
 
 int dwcmshc_probe(struct platform_device *pdev)
 {
+	struct sdhci_pltfm_host *pltfm_host;
+	struct sdhci_host *host;
+	struct dwcmshc_priv *priv;
+	unsigned int data;
+    unsigned int hi_sys_config_addr = 0x91585000;
+    int err;
+
+	host = sdhci_pltfm_init(pdev, &sdhci_dwcmshc_kendryte_pdata,
+				sizeof(struct dwcmshc_priv));
+	if (IS_ERR(host))
+		return PTR_ERR(host);
+
+	pltfm_host = sdhci_priv(host);
+	priv = sdhci_pltfm_priv(pltfm_host);
+    priv->hs_regs = ioremap(hi_sys_config_addr, 0x400);
+
+    if(memcmp(host->hw_name,"91581000",8) == 0) {
+        priv->have_phy = 0;
+        data = readl(priv->hs_regs + 8);
+        data |= 1<<2 | 1<<0;
+        writel(data, priv->hs_regs + 8);
+    } else {
+        priv->have_phy = 1;
+        data = readl(priv->hs_regs + 0);
+        data |= 1<<6 | 1<<4;
+        writel(data, priv->hs_regs + 0);
+    }
+
+    if (device_property_present(&pdev->dev, "is_emmc")) {
+        priv->is_emmc_card = 1;
+    } else {
+        priv->is_emmc_card = 0;
+    }
+
+    if(priv->have_phy) {
+        if (device_property_present(&pdev->dev, "io_fixed_1v8")) {
+            priv->io_fixed_1v8 = 1;
+        } else {
+            priv->io_fixed_1v8 = 0;
+        }
+        err = device_property_read_u32(&pdev->dev, "tx_delay_line", &priv->tx_delay_line);
+        if(err)
+            priv->tx_delay_line = 0x40;
+
+        err = device_property_read_u32(&pdev->dev, "rx_delay_line", &priv->rx_delay_line);
+        if(err)
+            priv->rx_delay_line = 0xd;
+
+    } else {
+        /*sdio:(fpga board) Launches CMD/DATA with respect to positive edge of cclk_tx */
+        err = device_property_read_u8(&pdev->dev, "mshc_ctrl_r", &priv->mshc_ctrl_r);
+        if(err)
+            priv->mshc_ctrl_r = 0;
+    }
+
+    if (priv->io_fixed_1v8) {
+		host->flags &= ~SDHCI_SIGNALING_330;
+	}
+
+	err = mmc_of_parse(host->mmc);
+	if (err)
+		goto err_clk;
+
+	sdhci_get_of_property(pdev);
+
+	err = sdhci_add_host(host);
+	if (err)
+	    goto err_clk;
+
     return 0;
+
+err_clk:
+    return err;
 }
