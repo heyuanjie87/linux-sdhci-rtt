@@ -1,24 +1,24 @@
 #include "osdep/port.h"
 
 #ifndef SDHCI_THREADEDIRQ_STACK_SIZE
-#define SDHCI_THREADEDIRQ_STACK_SIZE 4096
+#define SDHCI_THREADEDIRQ_STACK_SIZE 8192
 #endif
 
-struct irqaction 
+struct irqaction
 {
-	irq_handler_t		handler;
-	irq_handler_t		thread_fn;
-    void			*dev_id;
-	unsigned int		flags;
+    irq_handler_t handler;
+    irq_handler_t thread_fn;
+    void *dev_id;
+    unsigned int flags;
 };
 
-struct irq_desc 
+struct irq_desc
 {
-	struct irqaction	action[1];	/* IRQ action list */
-	wait_queue_head_t       wait_for_threads;
-	unsigned int		irq;
+    struct irqaction action[1]; /* IRQ action list */
+    wait_queue_head_t wait_for_threads;
+    unsigned int irq;
 
-	void *rtthd;
+    void *rtthd;
 };
 
 static void irq_thread(void *p)
@@ -39,13 +39,13 @@ static void irq_thread(void *p)
 static irqreturn_t __irq_hander(int irq, void *id)
 {
     irqreturn_t ret = IRQ_NONE;
-    struct irq_desc *desc = (struct irq_desc*)id;
+    struct irq_desc *desc = (struct irq_desc *)id;
     struct irqaction *act;
 
     act = desc->action;
     if (act)
     {
-        irq_handler_t		handler;
+        irq_handler_t handler;
 
         handler = act->handler;
         if (handler)
@@ -73,18 +73,18 @@ rt_weak int __sdhci_irq_hw_register(int irq, irq_handler_t handler, void *id)
 
 int __sdhci_platform_get_irq(struct platform_device *dev, unsigned int index)
 {
-	return dev->irq;
+    return dev->irq;
 }
 
 const void *__sdhci_free_irq(unsigned int irq, void *d)
 {
-	pr_todo();
+    pr_todo();
     return 0;
 }
 
 int __sdhci_request_threaded_irq(unsigned int irq, irq_handler_t handler,
-                         irq_handler_t thread_fn,
-                         unsigned long irqflags, const char *name, void *dev_id)
+                                 irq_handler_t thread_fn,
+                                 unsigned long irqflags, const char *name, void *dev_id)
 {
     struct irqaction *action;
     struct irq_desc *desc;
