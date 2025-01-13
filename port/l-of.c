@@ -72,6 +72,19 @@ int __sdhci_of_property_read_u64(const struct device_node *np,
     return 0;
 }
 
+int __sdhci_device_property_read_u8(struct device *dev,
+                                     const char *propname, u8 *val)
+{
+    struct property *prop = __find_property(dev->of_node, propname, NULL);
+
+    if (!prop)
+        return -EINVAL;
+
+    *val = (u8)prop->value;
+
+    return 0;
+}
+
 int __sdhci_of_alias_get_id(struct device_node *np, const char *stem)
 {
     pr_todo();

@@ -60,3 +60,5 @@ int __sdhci_irq_hw_register(unsigned int irq, irq_handler_t handler, void *id)
 
     return 0;
 }
+
+INIT_DEVICE_EXPORT(_sd1_init);

@@ -11,7 +11,7 @@ struct property
     int length;
     union
     {
-        unsigned long value;
+        u64 value;
         const char *str;
     };
 
@@ -66,5 +66,8 @@ int __sdhci_of_alias_get_id(struct device_node *np, const char *stem);
 
 const struct of_device_id *__sdhci_of_match_device(const struct of_device_id *matches, const struct device *dev);
 #define of_match_device(a, b) __sdhci_of_match_device(a, b)
+
+int __sdhci_device_property_read_u8(struct device *dev, const char *propname, u8 *val);
+#define device_property_read_u8(d, p, v) __sdhci_device_property_read_u8(d, p, v)
 
 #endif
